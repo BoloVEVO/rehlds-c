@@ -140,10 +140,6 @@ typedef IVoidHookChainRegistry<edict_t *> IRehldsHookRegistry_PF_Remove_I;
 typedef IVoidHookChain<edict_t *, int, const char *, float, float, int, int, int, int, const float *, edict_t *> IRehldsHook_PF_BuildSoundMsg_I;
 typedef IVoidHookChainRegistry<edict_t *, int, const char *, float, float, int, int, int, int, const float *, edict_t *> IRehldsHookRegistry_PF_BuildSoundMsg_I;
 
-//MapSoundIndex hook
-typedef IHookChain<int, int> IRehldsHook_MapSoundIndex;
-typedef IHookChainRegistry<int, int> IRehldsHookRegistry_MapSoundIndex;
-
 //SV_WriteFullClientUpdate hook
 typedef IVoidHookChain<IGameClient *, char *, size_t, sizebuf_t *, IGameClient *> IRehldsHook_SV_WriteFullClientUpdate;
 typedef IVoidHookChainRegistry<IGameClient *, char *, size_t, sizebuf_t *, IGameClient *> IRehldsHookRegistry_SV_WriteFullClientUpdate;
@@ -155,10 +151,6 @@ typedef IHookChainRegistry<bool, IGameClient *, resource_t *, uint32> IRehldsHoo
 //SV_DropClient hook
 typedef IVoidHookChain<IGameClient*, bool, const char*> IRehldsHook_SV_DropClient;
 typedef IVoidHookChainRegistry<IGameClient*, bool, const char*> IRehldsHookRegistry_SV_DropClient;
-
-//SV_LoadEntities hook
-typedef IVoidHookChain<> IRehldsHook_SV_LoadEntities;
-typedef IVoidHookChainRegistry<> IRehldsHookRegistry_SV_LoadEntities;
 
 //SV_ActivateServer hook
 typedef IVoidHookChain<int> IRehldsHook_SV_ActivateServer;
@@ -284,6 +276,18 @@ typedef IVoidHookChainRegistry<> IRehldsHookRegistry_SV_WriteBaselineMessage;
 typedef IHookChain<qboolean, IGameClient*> IRehldsHook_SV_SendClientDatagram;
 typedef IHookChainRegistry<qboolean, IGameClient*> IRehldsHookRegistry_SV_SendClientDatagram;
 
+//SV_LoadEntities hook
+typedef IVoidHookChain<> IRehldsHook_SV_LoadEntities;
+typedef IVoidHookChainRegistry<> IRehldsHookRegistry_SV_LoadEntities;
+
+//MapSoundIndex hook
+typedef IHookChain<int, int> IRehldsHook_MapSoundIndex;
+typedef IHookChainRegistry<int, int> IRehldsHookRegistry_MapSoundIndex;
+
+// PreProcessPacketEX hook
+typedef IHookChain<bool, uint8*, unsigned int, const netadr_t&, unsigned int> IRehldsHook_PreprocessPacketEX;
+typedef IHookChainRegistry<bool, uint8*, unsigned int, const netadr_t&, unsigned int> IRehldsHookRegistry_PreprocessPacketEX;
+
 class IRehldsHookchains {
 public:
 	virtual ~IRehldsHookchains() { }
@@ -313,11 +317,9 @@ public:
 	virtual IRehldsHookRegistry_SV_StartSound* SV_StartSound() = 0;
 	virtual IRehldsHookRegistry_PF_Remove_I* PF_Remove_I() = 0;
 	virtual IRehldsHookRegistry_PF_BuildSoundMsg_I* PF_BuildSoundMsg_I() = 0;
-	virtual IRehldsHookRegistry_MapSoundIndex* MapSoundIndex() = 0;
 	virtual IRehldsHookRegistry_SV_WriteFullClientUpdate* SV_WriteFullClientUpdate() = 0;
 	virtual IRehldsHookRegistry_SV_CheckConsistencyResponse* SV_CheckConsistencyResponse() = 0;
 	virtual IRehldsHookRegistry_SV_DropClient* SV_DropClient() = 0;
-	virtual IRehldsHookRegistry_SV_LoadEntities* SV_LoadEntities() = 0;
 	virtual IRehldsHookRegistry_SV_ActivateServer* SV_ActivateServer() = 0;
 	virtual IRehldsHookRegistry_SV_WriteVoiceCodec* SV_WriteVoiceCodec() = 0;
 	virtual IRehldsHookRegistry_Steam_GSGetSteamID* Steam_GSGetSteamID() = 0;
@@ -349,6 +351,9 @@ public:
 	virtual IRehldsHookRegistry_SV_SendUserReg* SV_SendUserReg() = 0;
 	virtual IRehldsHookRegistry_SV_WriteBaselineMessage* SV_WriteBaselineMessage() = 0;
 	virtual IRehldsHookRegistry_SV_SendClientDatagram* SV_SendClientDatagram() = 0;
+	virtual IRehldsHookRegistry_SV_LoadEntities* SV_LoadEntities() = 0;
+	virtual IRehldsHookRegistry_MapSoundIndex* MapSoundIndex() = 0;
+	virtual IRehldsHookRegistry_PreprocessPacketEX* PreprocessPacketEX() = 0;
 };
 
 struct RehldsFuncs_t {
@@ -464,6 +469,7 @@ struct RehldsFuncs_t {
 
 	// Pause
 	void(*SetServerPause)(bool status);
+	void(*NET_SendPacketEX)(netsrc_t sock, unsigned int length, void* data, const netadr_t& to);
 };
 
 class IRehldsApi {

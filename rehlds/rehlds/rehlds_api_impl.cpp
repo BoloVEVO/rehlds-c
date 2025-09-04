@@ -605,6 +605,7 @@ RehldsFuncs_t g_RehldsApiFuncs =
 	&GetHostFrameTime_api,
 	&GetFirstCmdFunctionHandle_api,
 	&SetServerPause,
+	&NET_SendPacketEX_api,
 };
 
 bool EXT_FUNC SV_EmitSound2_internal(edict_t *entity, IGameClient *pReceiver, int channel, const char *sample, float volume, float attenuation, int flags, int pitch, int emitFlags, const float *pOrigin)
@@ -807,10 +808,6 @@ IRehldsHookRegistry_PF_BuildSoundMsg_I* CRehldsHookchains::PF_BuildSoundMsg_I() 
 	return &m_PF_BuildSoundMsg_I;
 }
 
-IRehldsHookRegistry_MapSoundIndex* CRehldsHookchains::MapSoundIndex() {
-	return &m_MapSoundIndex;
-}
-
 IRehldsHookRegistry_SV_WriteFullClientUpdate* CRehldsHookchains::SV_WriteFullClientUpdate() {
 	return &m_SV_WriteFullClientUpdate;
 }
@@ -821,10 +818,6 @@ IRehldsHookRegistry_SV_CheckConsistencyResponse* CRehldsHookchains::SV_CheckCons
 
 IRehldsHookRegistry_SV_DropClient* CRehldsHookchains::SV_DropClient() {
 	return &m_SV_DropClient;
-}
-
-IRehldsHookRegistry_SV_LoadEntities* CRehldsHookchains::SV_LoadEntities() {
-	return &m_SV_LoadEntities;
 }
 
 IRehldsHookRegistry_SV_ActivateServer* CRehldsHookchains::SV_ActivateServer() {
@@ -950,6 +943,18 @@ IRehldsHookRegistry_SV_WriteBaselineMessage* CRehldsHookchains::SV_WriteBaseline
 
 IRehldsHookRegistry_SV_SendClientDatagram* CRehldsHookchains::SV_SendClientDatagram() {
 	return &m_SV_SendClientDatagram;
+}
+
+IRehldsHookRegistry_SV_LoadEntities* CRehldsHookchains::SV_LoadEntities() {
+	return &m_SV_LoadEntities;
+}
+
+IRehldsHookRegistry_MapSoundIndex* CRehldsHookchains::MapSoundIndex() {
+	return &m_MapSoundIndex;
+}
+
+IRehldsHookRegistry_PreprocessPacketEX* CRehldsHookchains::PreprocessPacketEX() {
+	return &m_PreprocessPacketEX;
 }
 
 int EXT_FUNC CRehldsApi::GetMajorVersion()

@@ -1380,6 +1380,10 @@ int NET_SendLong(netsrc_t sock, SOCKET s, const char *buf, int len, int flags, c
 	return nSend;
 }
 
+void EXT_FUNC NET_SendPacketEX_api(netsrc_t sock, unsigned int length, void* data, const netadr_t& to)
+{
+	NET_SendPacket(sock, length, data, to);
+}
 
 void EXT_FUNC NET_SendPacket_api(unsigned int length, void *data, const netadr_t &to)
 {

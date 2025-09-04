@@ -3942,79 +3942,95 @@ bool EXT_FUNC NET_GetPacketPreprocessor(uint8* data, unsigned int len, const net
 	return true;
 }
 
+bool EXT_FUNC NET_GetPacketPreprocessorEX(uint8* data, unsigned int len, const netadr_t& srcAddr, unsigned int game)
+{
+	return true;
+}
+
 void SV_ReadPackets(void)
 {
-	while (num_extra_games ? NET_GetExtraPacket() : NET_GetPacket(NS_SERVER))
+	for (int iGame = 0; iGame < num_extra_games; iGame++)
 	{
-#ifndef REHLDS_FIXES
-		if (SV_FilterPacket())
+		while (num_extra_games ? NET_GetPacket((netsrc_t)(NS_EXTRA + iGame)) : NET_GetPacket(NS_SERVER))
 		{
-			SV_SendBan();
-			continue;
-		}
-#endif
-
-		bool pass = g_RehldsHookchains.m_PreprocessPacket.callChain(NET_GetPacketPreprocessor, net_message.data, net_message.cursize, net_from);
-		if (!pass)
-			continue;
-
-		if (*(uint32 *)net_message.data == 0xFFFFFFFF)
-		{
-			// Connectionless packet
-			if (g_RehldsHookchains.m_SV_CheckConnectionLessRateLimits.callChain([](netadr_t& net_from, const uint8_t *, int) { return SV_CheckConnectionLessRateLimits(net_from); }, net_from, net_message.data, net_message.cursize))
+	#ifndef REHLDS_FIXES
+			if (SV_FilterPacket())
 			{
-#ifdef REHLDS_FIXES
-				if (SV_FilterPacket())
+				SV_SendBan();
+				continue;
+			}
+	#endif
+
+			bool pass = g_RehldsHookchains.m_PreprocessPacket.callChain(NET_GetPacketPreprocessor, net_message.data, net_message.cursize, net_from);
+			if (!pass)
+				continue;
+
+			bool passEX = g_RehldsHookchains.m_PreprocessPacketEX.callChain(NET_GetPacketPreprocessorEX, net_message.data, net_message.cursize, net_from, iGame);
+
+			if (!passEX)
+				continue;
+
+			if (*(uint32 *)net_message.data == 0xFFFFFFFF)
+			{
+				// Connectionless packet
+				if (g_RehldsHookchains.m_SV_CheckConnectionLessRateLimits.callChain([](netadr_t& net_from, const uint8_t *, int) { return SV_CheckConnectionLessRateLimits(net_from); }, net_from, net_message.data, net_message.cursize))
 				{
-					SV_SendBan();
+	#ifdef REHLDS_FIXES
+					if (SV_FilterPacket())
+					{
+						SV_SendBan();
+						continue;
+					}
+	#endif
+
+					CRehldsPlatformHolder::get()->SteamGameServerExtra(net_sock)->HandleIncomingPacket(net_message.data, net_message.cursize, ntohl(*(u_long*)&net_from.ip[0]), htons(net_from.port));
+					SV_ConnectionlessPacket();
+				}
+
+				continue;
+			}
+
+			for (int i = 0 ; i < g_psvs.maxclients; i++)
+			{
+				client_t *cl = &g_psvs.clients[i];
+				if (!cl->connected && !cl->active && !cl->spawned)
+				{
 					continue;
 				}
-#endif
 
-				CRehldsPlatformHolder::get()->SteamGameServerExtra(net_sock)->HandleIncomingPacket(net_message.data, net_message.cursize, ntohl(*(u_long*)&net_from.ip[0]), htons(net_from.port));
-				SV_ConnectionlessPacket();
-			}
-
-			continue;
-		}
-
-		for (int i = 0 ; i < g_psvs.maxclients; i++)
-		{
-			client_t *cl = &g_psvs.clients[i];
-			if (!cl->connected && !cl->active && !cl->spawned)
-			{
-				continue;
-			}
-
-			if (NET_CompareAdr(net_from, cl->netchan.remote_address) != TRUE)
-			{
-				continue;
-			}
-
-			if (Netchan_Process(&cl->netchan))
-			{
-				if (g_psvs.maxclients == 1 || !cl->active || !cl->spawned || !cl->fully_connected)
+				if (NET_CompareAdr(net_from, cl->netchan.remote_address) != TRUE)
 				{
-					cl->send_message = TRUE;
+					continue;
 				}
 
-				SV_ExecuteClientMessage(cl);
-				gGlobalVariables.frametime = host_frametime;
-			}
-
-			if (Netchan_IncomingReady(&cl->netchan))
-			{
-				if (Netchan_CopyNormalFragments(&cl->netchan))
+				if (Netchan_Process(&cl->netchan))
 				{
-					MSG_BeginReading();
+					if (g_psvs.maxclients == 1 || !cl->active || !cl->spawned || !cl->fully_connected)
+					{
+						cl->send_message = TRUE;
+					}
+
 					SV_ExecuteClientMessage(cl);
+					gGlobalVariables.frametime = host_frametime;
 				}
-				if (Netchan_CopyFileFragments(&cl->netchan))
+
+				if (Netchan_IncomingReady(&cl->netchan))
 				{
-					host_client = cl;
-					SV_ProcessFile(cl, cl->netchan.incomingfilename);
+					if (Netchan_CopyNormalFragments(&cl->netchan))
+					{
+						MSG_BeginReading();
+						SV_ExecuteClientMessage(cl);
+					}
+					if (Netchan_CopyFileFragments(&cl->netchan))
+					{
+						host_client = cl;
+						SV_ProcessFile(cl, cl->netchan.incomingfilename);
+					}
 				}
 			}
+
+			if (!num_extra_games)
+				break;
 		}
 	}
 }
@@ -6590,7 +6606,7 @@ int SV_SpawnServer(qboolean bIsDemo, char *server, char *startspot)
 
 
 void SV_LoadEntities() {
-	g_RehldsHookchains.m_SV_LoadEntities.callChain(SV_LoadEntities_internal);
+	return g_RehldsHookchains.m_SV_LoadEntities.callChain(SV_LoadEntities_internal);
 }
 
 void SV_LoadEntities_internal(void)

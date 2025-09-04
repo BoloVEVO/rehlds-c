@@ -204,6 +204,7 @@ qboolean NET_GetExtraPacket();
 void NET_AllocateQueues();
 void NET_FlushQueues();
 int NET_SendLong(netsrc_t sock, SOCKET s, const char *buf, int len, int flags, const struct sockaddr *to, int tolen);
+void NET_SendPacketEX_api(netsrc_t sock, unsigned int length, void* data, const netadr_t& to);
 void NET_SendPacket_api(unsigned int length, void *data, const netadr_t &to);
 void NET_SendPacket(netsrc_t sock, int length, void *data, const netadr_t& to);
 SOCKET NET_IPSocket(char *net_interface, int port, qboolean multicast);
